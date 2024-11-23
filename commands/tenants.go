@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/arctir/flightdeck-cli/commands/common"
 	"github.com/arctir/flightdeck-cli/commands/output"
@@ -10,29 +11,18 @@ import (
 
 type TenantsCreateCommand struct {
 	common.OrgFlags
-	Name        string `arg:"name"`
-	DisplayName string `arg:"display_name"`
+	Name        string `arg:"name" help:"Name of the tenant."`
+	DisplayName string `arg:"display_name" help:"Display name of the tenant."`
 }
 
 type TenantsGetCommand struct {
 	common.OrgFlags
-	Name string `arg:"name"`
-}
-
-type TenantsListCommand struct {
-	common.OrgFlags
+	Name *string `arg:"name" optional:"" help:"Name of the tenant."`
 }
 
 type TenantsDeleteCommand struct {
 	common.OrgFlags
-	Name string `arg:"name"`
-}
-
-type TenantsCommand struct {
-	Create TenantsCreateCommand `cmd:"create"`
-	Get    TenantsGetCommand    `cmd:"get"`
-	List   TenantsListCommand   `cmd:"list"`
-	Delete TenantsDeleteCommand `cmd:"delete"`
+	Name string `arg:"name" help:"Name of the tenant."`
 }
 
 func (c TenantsCreateCommand) Run(parent *Cli, ctx *Context) error {
@@ -41,7 +31,7 @@ func (c TenantsCreateCommand) Run(parent *Cli, ctx *Context) error {
 		DisplayName: c.DisplayName,
 	}
 
-	resp, err := ctx.APIClient.CreateTenantWithResponse(context.TODO(), c.Org, tenantInput)
+	resp, err := ctx.APIClient.CreateTenantWithResponse(context.TODO(), c.Org.String(), tenantInput)
 	if err != nil {
 		return err
 	}
@@ -52,7 +42,17 @@ func (c TenantsCreateCommand) Run(parent *Cli, ctx *Context) error {
 }
 
 func (c TenantsGetCommand) Run(parent *Cli, ctx *Context) error {
-	resp, err := ctx.APIClient.GetTenantWithResponse(context.TODO(), c.Org, c.Name)
+	if c.Name == nil {
+		return c.list(parent, ctx)
+	}
+	return c.get(parent, ctx)
+}
+
+func (c TenantsGetCommand) get(parent *Cli, ctx *Context) error {
+	if c.Name == nil {
+		return errors.New("name is required")
+	}
+	resp, err := ctx.APIClient.GetTenantWithResponse(context.TODO(), c.Org.String(), *c.Name)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (c TenantsGetCommand) Run(parent *Cli, ctx *Context) error {
 	return output.OutputResult(parent.OutputFormat, (*output.Tenant)(resp.JSON200))
 }
 
-func (c TenantsListCommand) Run(parent *Cli, ctx *Context) error {
+func (c TenantsGetCommand) list(parent *Cli, ctx *Context) error {
 	var err error
 	resp := &flightdeckv1.GetTenantsResponse{}
 	tenants := output.TenantList{}
@@ -72,7 +72,7 @@ func (c TenantsListCommand) Run(parent *Cli, ctx *Context) error {
 			params.Prev = resp.JSON200.PageInfo.Prev
 			params.Next = resp.JSON200.PageInfo.Next
 		}
-		resp, err = ctx.APIClient.GetTenantsWithResponse(context.TODO(), c.Org, &params)
+		resp, err = ctx.APIClient.GetTenantsWithResponse(context.TODO(), c.Org.String(), &params)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (c TenantsListCommand) Run(parent *Cli, ctx *Context) error {
 }
 
 func (c TenantsDeleteCommand) Run(ctx *Context) error {
-	resp, err := ctx.APIClient.DeleteTenantWithResponse(context.TODO(), c.Org, c.Name)
+	resp, err := ctx.APIClient.DeleteTenantWithResponse(context.TODO(), c.Org.String(), c.Name)
 	if err != nil {
 		return err
 	}

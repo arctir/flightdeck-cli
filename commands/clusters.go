@@ -2,23 +2,25 @@ package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/arctir/flightdeck-cli/commands/output"
 	flightdeckv1 "github.com/arctir/go-flightdeck/pkg/api/v1"
+	"github.com/google/uuid"
 )
 
-type ClustersListCommand struct{}
-
 type ClustersGetCommand struct {
-	Id string `arg:"id"`
+	Id *uuid.UUID `arg:"id" optional:"" name:"id" help:"ID of the cluster to get. If not provided, lists all clusters."`
 }
 
-type ClustersCommand struct {
-	List ClustersListCommand `cmd:"list"`
-	Get  ClustersGetCommand  `cmd:"get"`
+func (c ClustersGetCommand) Run(parent *Cli, ctx *Context) error {
+	if c.Id == nil {
+		return c.list(parent, ctx)
+	}
+	return c.get(parent, ctx)
 }
 
-func (c *ClustersListCommand) Run(parent *Cli, ctx *Context) error {
+func (c ClustersGetCommand) list(parent *Cli, ctx *Context) error {
 	var err error
 	resp := &flightdeckv1.GetClustersResponse{}
 	clusters := []flightdeckv1.Cluster{}
@@ -46,8 +48,11 @@ func (c *ClustersListCommand) Run(parent *Cli, ctx *Context) error {
 	return output.OutputResult(parent.OutputFormat, (*output.ClusterList)(&clusters))
 }
 
-func (c *ClustersGetCommand) Run(parent *Cli, ctx *Context) error {
-	resp, err := ctx.APIClient.GetClusterByIdWithResponse(context.TODO(), c.Id)
+func (c ClustersGetCommand) get(parent *Cli, ctx *Context) error {
+	if c.Id == nil {
+		return errors.New("id is required")
+	}
+	resp, err := ctx.APIClient.GetClusterByIdWithResponse(context.TODO(), c.Id.String())
 	if err != nil {
 		return err
 	}

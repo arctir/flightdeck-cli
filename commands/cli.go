@@ -11,16 +11,10 @@ import (
 type Cli struct {
 	common.Globals
 
-	Auth              AuthCommand              `cmd:"auth"`
-	Clusters          ClustersCommand          `cmd:"clusters"`
-	Orgs              OrgsCommand              `cmd:"orgs"`
-	TenantUsers       TenantUsersCommand       `cmd:"tenantusers"`
-	Tenants           TenantsCommand           `cmd:"tenants"`
-	Portals           PortalsCommand           `cmd:"portals"`
-	Integrations      IntegrationsCommand      `cmd:"integrations"`
-	CatalogProviders  CatalogProvidersCommand  `cmd:"catalogproviders"`
-	PluginDefinitions PluginDefinitionsCommand `cmd:"plugindefinitions"`
-	IdentityProviders IdentityProvidersCommand `cmd:"identityproviders"`
+	Auth   AuthCommand   `cmd:"auth"`
+	Create CreateCommand `cmd:"create"`
+	Get    GetCommand    `cmd:"get" predictor:"getPredictor"`
+	Delete DeleteCommand `cmd:"delete"`
 }
 
 func (c *Cli) AfterApply(ctx *Context, globals *common.Globals) error {

@@ -38,8 +38,9 @@ func main() {
 		kong.Bind(&cli.Globals),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
-			Compact: true,
-			Summary: false,
+			Compact:             true,
+			Summary:             false,
+			NoExpandSubcommands: true,
 		}))
 	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)

@@ -2,27 +2,55 @@ package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/arctir/flightdeck-cli/commands/common"
 	"github.com/arctir/flightdeck-cli/commands/output"
 	flightdeckv1 "github.com/arctir/go-flightdeck/pkg/api/v1"
 )
 
-type CatalogProvidersCommand struct {
-	List CatalogProvidersListCommand `cmd:"list"`
-	Get  CatalogProvidersGetCommand  `cmd:"update"`
-}
-
-type CatalogProvidersListCommand struct {
+type CatalogProvidersCreateCommand struct {
 	common.PortalFlags
+	Name string `arg:"name" help:"Name of the catalog provider."`
 }
 
 type CatalogProvidersGetCommand struct {
 	common.PortalFlags
-	Name string `arg:"name"`
+	Name *string `arg:"name" optional:"" help:"Name of the catalog provider to get. If not provided, lists all catalog providers."`
 }
 
-func (c *CatalogProvidersListCommand) Run(parent *Cli, ctx *Context) error {
+type CatalogProvidersDeleteCommand struct {
+	common.PortalFlags
+	Name string `arg:"name" help:"Name of the catalog provider."`
+}
+
+func (c CatalogProvidersCreateCommand) Run(parent *Cli, ctx *Context) error {
+	return errors.New("not implemented")
+}
+
+func (c CatalogProvidersGetCommand) Run(parent *Cli, ctx *Context) error {
+	if c.Name == nil {
+		return c.list(parent, ctx)
+	}
+	return c.get(parent, ctx)
+}
+
+func (c CatalogProvidersGetCommand) get(parent *Cli, ctx *Context) error {
+	if c.Name == nil {
+		return errors.New("name is required")
+	}
+	resp, err := ctx.APIClient.GetCatalogProviderWithResponse(context.TODO(), c.Org.String(), c.PortalName, *c.Name)
+	if err != nil {
+		return err
+	}
+
+	if !output.IsOutputtableResponse(resp.HTTPResponse) {
+		return nil
+	}
+	return output.OutputResult(parent.OutputFormat, (*output.CatalogProvider)(resp.JSON200))
+}
+
+func (c CatalogProvidersGetCommand) list(parent *Cli, ctx *Context) error {
 	var err error
 	resp := &flightdeckv1.GetCatalogProvidersResponse{}
 	catalogProviders := output.CatalogProviderList{}
@@ -32,7 +60,7 @@ func (c *CatalogProvidersListCommand) Run(parent *Cli, ctx *Context) error {
 			params.Prev = resp.JSON200.PageInfo.Prev
 			params.Next = resp.JSON200.PageInfo.Next
 		}
-		resp, err = ctx.APIClient.GetCatalogProvidersWithResponse(context.TODO(), c.Org, c.PortalName, &params)
+		resp, err = ctx.APIClient.GetCatalogProvidersWithResponse(context.TODO(), c.Org.String(), c.PortalName, &params)
 		if err != nil {
 			return err
 		}
@@ -50,14 +78,13 @@ func (c *CatalogProvidersListCommand) Run(parent *Cli, ctx *Context) error {
 	return output.OutputResult(parent.OutputFormat, &catalogProviders)
 }
 
-func (c *CatalogProvidersGetCommand) Run(parent *Cli, ctx *Context) error {
-	resp, err := ctx.APIClient.GetCatalogProviderWithResponse(context.TODO(), c.Org, c.PortalName, c.Name)
+func (c CatalogProvidersDeleteCommand) Run(ctx *Context) error {
+	resp, err := ctx.APIClient.DeleteCatalogProviderWithResponse(context.TODO(), c.Org.String(), c.PortalName, c.Name)
 	if err != nil {
 		return err
 	}
-
 	if !output.IsOutputtableResponse(resp.HTTPResponse) {
 		return nil
 	}
-	return output.OutputResult(parent.OutputFormat, (*output.CatalogProvider)(resp.JSON200))
+	return nil
 }

@@ -43,10 +43,11 @@ type apiResponse interface {
 		*Portal | *PortalList |
 		*CatalogProvider | *CatalogProviderList |
 		*Integration | *IntegrationList |
-		*PluginDefinition | *PluginDefinitionList |
 		*Tenant | *TenantList |
 		*TenantUser | *TenantUserList |
-		*IdentityProvider | *IdentityProviderList
+		*IdentityProvider | *IdentityProviderList |
+		*PortalVersion | *PortalVersionList |
+		*Connection | *ConnectionList
 
 	TableWriter() table.Writer
 }

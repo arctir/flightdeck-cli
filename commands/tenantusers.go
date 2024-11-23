@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/arctir/flightdeck-cli/commands/common"
 	"github.com/arctir/flightdeck-cli/commands/output"
@@ -17,22 +18,12 @@ type TenantUsersCreateCommand struct {
 
 type TenantUsersGetCommand struct {
 	common.TenantFlags
-	Username string `arg:"username"`
-}
-
-type TenantUsersListCommand struct {
-	common.TenantFlags
+	Username *string `arg:"username"`
 }
 
 type TenantUsersDeleteCommand struct {
 	common.TenantFlags
 	Username string `arg:"username"`
-}
-type TenantUsersCommand struct {
-	Create TenantUsersCreateCommand `cmd:"create"`
-	Get    TenantUsersGetCommand    `cmd:"get"`
-	List   TenantUsersListCommand   `cmd:"list"`
-	Delete TenantUsersDeleteCommand `cmd:"delete"`
 }
 
 func (c TenantUsersCreateCommand) Run(parent *Cli, ctx *Context) error {
@@ -41,7 +32,7 @@ func (c TenantUsersCreateCommand) Run(parent *Cli, ctx *Context) error {
 		Email:    openapi_types.Email(c.Email),
 	}
 
-	resp, err := ctx.APIClient.CreateTenantUserWithResponse(context.TODO(), c.Org, c.TenantName, user)
+	resp, err := ctx.APIClient.CreateTenantUserWithResponse(context.TODO(), c.Org.String(), c.TenantName, user)
 	if err != nil {
 		return err
 	}
@@ -52,7 +43,17 @@ func (c TenantUsersCreateCommand) Run(parent *Cli, ctx *Context) error {
 }
 
 func (c TenantUsersGetCommand) Run(parent *Cli, ctx *Context) error {
-	resp, err := ctx.APIClient.GetTenantUserWithResponse(context.TODO(), c.Org, c.TenantName, c.Username)
+	if c.Username == nil {
+		return c.list(parent, ctx)
+	}
+	return c.get(parent, ctx)
+}
+
+func (c TenantUsersGetCommand) get(parent *Cli, ctx *Context) error {
+	if c.Username == nil {
+		return errors.New("username is required")
+	}
+	resp, err := ctx.APIClient.GetTenantUserWithResponse(context.TODO(), c.Org.String(), c.TenantName, *c.Username)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func (c TenantUsersGetCommand) Run(parent *Cli, ctx *Context) error {
 	return output.OutputResult(parent.OutputFormat, (*output.TenantUser)(resp.JSON200))
 }
 
-func (c TenantUsersListCommand) Run(parent *Cli, ctx *Context) error {
+func (c TenantUsersGetCommand) list(parent *Cli, ctx *Context) error {
 	var err error
 	resp := &flightdeckv1.GetTenantUsersResponse{}
 	users := output.TenantUserList{}
@@ -72,7 +73,7 @@ func (c TenantUsersListCommand) Run(parent *Cli, ctx *Context) error {
 			params.Prev = resp.JSON200.PageInfo.Prev
 			params.Next = resp.JSON200.PageInfo.Next
 		}
-		resp, err = ctx.APIClient.GetTenantUsersWithResponse(context.TODO(), c.Org, c.TenantName, &params)
+		resp, err = ctx.APIClient.GetTenantUsersWithResponse(context.TODO(), c.Org.String(), c.TenantName, &params)
 		if err != nil {
 			return err
 		}
@@ -91,7 +92,7 @@ func (c TenantUsersListCommand) Run(parent *Cli, ctx *Context) error {
 }
 
 func (c TenantUsersDeleteCommand) Run(ctx *Context) error {
-	resp, err := ctx.APIClient.DeleteTenantUserWithResponse(context.TODO(), c.Org, c.TenantName, c.Username)
+	resp, err := ctx.APIClient.DeleteTenantUserWithResponse(context.TODO(), c.Org.String(), c.TenantName, c.Username)
 	if err != nil {
 		return err
 	}
