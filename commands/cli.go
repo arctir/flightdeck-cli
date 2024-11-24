@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -8,13 +9,27 @@ import (
 	flightdeckclient "github.com/arctir/go-flightdeck/pkg/client"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 type Cli struct {
 	common.Globals
 
-	Auth   AuthCommand   `cmd:"auth"`
-	Create CreateCommand `cmd:"create"`
-	Get    GetCommand    `cmd:"get" predictor:"getPredictor"`
-	Delete DeleteCommand `cmd:"delete"`
+	Auth    AuthCommand    `cmd:"auth"`
+	Create  CreateCommand  `cmd:"create"`
+	Get     GetCommand     `cmd:"get" predictor:"getPredictor"`
+	Delete  DeleteCommand  `cmd:"delete"`
+	Version VersionCommand `cmd:"version"`
+}
+
+type VersionCommand struct{}
+
+func (c VersionCommand) Run(parent *Cli, ctx *Context) error {
+	fmt.Printf("flightdeck %s, commit %s, built at %s", version, commit, date)
+	return nil
 }
 
 func (c *Cli) AfterApply(ctx *Context, globals *common.Globals) error {

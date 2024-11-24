@@ -5,6 +5,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/arctir/flightdeck-cli/commands"
+	"github.com/google/uuid"
 )
 
 const defaultAPIEndpoint = "https://api.arctir.cloud/v1"
@@ -26,6 +27,9 @@ func main() {
 	}
 
 	defaultOrg := os.Getenv("FLIGHTDECK_ORG")
+	if defaultOrg == "" {
+		defaultOrg = uuid.Nil.String()
+	}
 
 	cli := commands.Cli{}
 	commandContext := commands.Context{}
