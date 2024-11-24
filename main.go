@@ -20,10 +20,12 @@ func main() {
 	apiEndpoint := defaultAPIEndpoint
 	authEndpoint := defaultAuthEndpoint
 
-	env := os.Getenv("FLIGHTDECK_ENV")
-	if env == "local" {
+	flightdeckEnv := os.Getenv("FLIGHTDECK_ENV")
+	if flightdeckEnv == "local" {
 		apiEndpoint = defaultLocalAPIEndpoint
 	}
+
+	defaultOrg := os.Getenv("FLIGHTDECK_ORG")
 
 	cli := commands.Cli{}
 	commandContext := commands.Context{}
@@ -33,6 +35,7 @@ func main() {
 			"apiEndpoint":  apiEndpoint,
 			"authEndpoint": authEndpoint,
 			"configPath":   *configPath,
+			"defaultOrg":   defaultOrg,
 		},
 		kong.Bind(&commandContext),
 		kong.Bind(&cli.Globals),
