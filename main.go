@@ -5,12 +5,17 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/arctir/flightdeck-cli/commands"
-	"github.com/google/uuid"
 )
 
 const defaultAPIEndpoint = "https://api.arctir.cloud/v1"
 const defaultLocalAPIEndpoint = "http://localhost:9090/v1"
 const defaultAuthEndpoint = "https://auth.arctir.cloud/realms/arctir-prod"
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 func main() {
 	configPath, err := commands.ConfigPath()
@@ -26,11 +31,6 @@ func main() {
 		apiEndpoint = defaultLocalAPIEndpoint
 	}
 
-	defaultOrg := os.Getenv("FLIGHTDECK_ORG")
-	if defaultOrg == "" {
-		defaultOrg = uuid.Nil.String()
-	}
-
 	cli := commands.Cli{}
 	commandContext := commands.Context{}
 	ctx := kong.Parse(&cli,
@@ -39,7 +39,9 @@ func main() {
 			"apiEndpoint":  apiEndpoint,
 			"authEndpoint": authEndpoint,
 			"configPath":   *configPath,
-			"defaultOrg":   defaultOrg,
+			"buildVersion": version,
+			"buildCommit":  commit,
+			"buildDate":    date,
 		},
 		kong.Bind(&commandContext),
 		kong.Bind(&cli.Globals),

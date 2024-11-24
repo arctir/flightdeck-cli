@@ -5,14 +5,9 @@ import (
 	"os"
 	"path"
 
+	"github.com/alecthomas/kong"
 	"github.com/arctir/flightdeck-cli/commands/common"
 	flightdeckclient "github.com/arctir/go-flightdeck/pkg/client"
-)
-
-var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
 )
 
 type Cli struct {
@@ -27,8 +22,8 @@ type Cli struct {
 
 type VersionCommand struct{}
 
-func (c VersionCommand) Run(parent *Cli, ctx *Context) error {
-	fmt.Printf("flightdeck %s, commit %s, built at %s", version, commit, date)
+func (c VersionCommand) Run(vars kong.Vars) error {
+	fmt.Printf("flightdeck %s, commit %s, built at %s\n", vars["buildVersion"], vars["buildCommit"], vars["buildDate"])
 	return nil
 }
 

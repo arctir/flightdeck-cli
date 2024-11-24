@@ -3,7 +3,7 @@ package common
 import "github.com/google/uuid"
 
 type OrgFlags struct {
-	Org *uuid.UUID `name:"org" short:"o" optional:"" default:"${defaultOrg}" help:"ID of the organization."`
+	Org uuid.UUID `name:"org" short:"o" required:"" env:"FLIGHTDECK_ORG" help:"ID of the organization."`
 }
 
 type PortalFlags struct {
